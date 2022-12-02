@@ -5,6 +5,7 @@ DA FARE:
 - gestisci timbro firmato
 - aggiungi un pochino di random nel posizionamento della firma o le sue dimensioni o più firme
 - opzione di inviare via email o mettere a disposizione in altro modo
+- la prescrizione mettila in pdf se viene specificato qualcosa (manualmente o dall'elenco)
 
 ORGANIZZAZIONE:
 
@@ -41,6 +42,7 @@ import PySimpleGUI as sg
 import csv
 import os
 import sys
+import random
 import datetime
 from fpdf import FPDF
 
@@ -140,13 +142,12 @@ lista_filtrata_farmaci = filtra_lista_farmaci("","")   # creo una lista di fatto
 
 # ------ CREAZIONE LAYOUT ---------------------------------------------------------------
 layout =  [ [sg.Combo(lista_filtrata_farmaci,size=(50,20), tooltip="farmaco", key="farmaci_cb", default_value="Farmaco da prescrivere", background_color = colore_per_campi_obbligatori),
-                 sg.Combo(lista_categorie,size=(20,20), tooltip="Categoria farmaco", default_value="Categoria farmaco", key="categorie_cb", enable_events=True),
+                 sg.Combo(lista_categorie,size=(20,20), tooltip="Categoria farmaco", default_value="Categoria farmaco", key="categorie_cb", enable_events=True, readonly = True),
                  sg.Text("Ricerca veloce"),sg.InputText(tooltip="cosa cercare",size=(20,20))],
-            [sg.Checkbox("Inserisci istruzioni dosaggio"),sg.Text (' Prescrizione='),sg.InputText(size=(50,50), tooltip="Prescrizione finale"),
-             sg.Button("Reset valori", key='reset')],
+            [sg.Checkbox("Inserisci istruzioni dosaggio"),sg.Text (' Prescrizione='),sg.InputText(size=(50,50), tooltip="Prescrizione finale")],
             [sg.HorizontalSeparator()],
             [sg.Input("Cognome, nome e data di nascita",tooltip="cognome, nome e data di nascita",size=(50,10),key="cognome_nome_cb", background_color = colore_per_campi_obbligatori),
-              sg.Combo(nominativi_da_file,size=(30,10),default_value="Elenco pazienti con data di nascita",key='pazienti_cb',enable_events=True),sg.Button("Salva paziente") ],
+              sg.Combo(nominativi_da_file,size=(30,10),default_value="Elenco pazienti con data di nascita",key='pazienti_cb',enable_events=True, readonly = True),sg.Button("Salva paziente") ],
             [sg.HorizontalSeparator()],
             [ sg.Text("Data ricetta"), sg.Input(data_odierna(),tooltip="data della ricetta",size=(10, 10), key="data_ricetta"),
               sg.Combo(["Abano Terme","Monselice", "Padova","Piove di Sacco"], size=(30,10), default_value="Padova", key="citta"),
@@ -158,7 +159,7 @@ layout =  [ [sg.Combo(lista_filtrata_farmaci,size=(50,20), tooltip="farmaco", ke
             ],
             [sg.Button(' Annulla ',size=(15,1), key="cancel"),
              sg.Combo(["A5","A4"],size=(5,20), tooltip="formato_pagina", default_value="A5", key="formato_pagina"),
-             sg.Button(" Crea PDF ",size=(40,2),key="crea_pdf")]  ]
+             sg.Button(" Crea PDF ",size=(50,2),key="crea_pdf"), sg.Button("Reset valori", key='reset')]  ]
 
 sg.theme('DarkTeal6')
 
@@ -244,9 +245,15 @@ while True:
 
                 pdf.cell(0, 20,"        - " +  farmaco_da_prescrivere, new_x="LMARGIN", new_y="NEXT", align='L', border=bordo)
                 pdf.cell(0, 30, '', new_x="LMARGIN", new_y="NEXT", align='C', border=bordo)  # creo uno spazio vuoto
-                pdf.cell(0, 6, "                         _____________________________", new_x="LMARGIN", new_y="NEXT", align='L', border=bordo)
 
-                pdf.image("autog/1.rma", x = 50, y = 130, w = 60, h = 0, type = 'png', link = '')
+                # Gestione firma
+                pdf.cell(0, 6, "                         _____________________________", new_x="LMARGIN", new_y="NEXT", align='L', border=bordo)
+                # credo un po' di casualità nel posizionamento della firma
+                spostamento_x = random.randint(0,10)
+                spostamento_y = random.randint(0,2)
+                print("spostamenti",spostamento_x," # ", spostamento_y)
+                dimensione_firma = 50   #60
+                pdf.image("autog/1.rma", x = 40+spostamento_x, y = 130 + spostamento_y, w = dimensione_firma, h = 0, type = 'png', link = '')
 
                 # Creazione finale del file pdf
                 pdf.output("Prescrizione.pdf")
